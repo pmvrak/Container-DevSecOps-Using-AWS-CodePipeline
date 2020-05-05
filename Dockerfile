@@ -1,19 +1,20 @@
-FROM httpd:2.4
+FROM centos:7
+#MAINTAINER The CentOS Project <cloud-ops@centos.org>
+LABEL Vendor="CentOS" \
+      License=GPLv2 \
+      Version=2.4.6-40
 
-# Just my name who wrote this file
-#MAINTAINER SaravAK (aksarav@middlewareinventory.com)
 
-# to Copy a file named httpd.conf from present working directory to the /usr/local/apache2/conf inside the container
-# I have taken the Standard httpd.conf file and enabled the necassary modules and adding Support for an additional Directory
-COPY apache-conf /usr/local/apache2/conf/httpd.conf
+RUN yum -y --setopt=tsflags=nodocs update && \
+    yum -y --setopt=tsflags=nodocs install httpd && \
+    yum clean all
 
-# This is the Additional Directory where we are going to keep our Virtualhost configuraiton files
-# You can use the image to create N number of different virtual hosts
-RUN mkdir -p /usr/local/apache2/conf/sites/
-
-# To tell docker to expose this port
 EXPOSE 80
 
-# The Base command, This command should be used to start the container
-# Remember, A Container is a Process.As long as the base process (started by base cmd) is live the Container will be ALIVE.
-CMD ["httpd", "-D", "FOREGROUND"]
+# Simple startup script to avoid some issues observed with container restart
+#ADD run-httpd.sh /run-httpd.sh
+COPY run-httpd.sh /run-httpd.sh
+COPY index.html /var/www/html/
+RUN chmod -v +x /run-httpd.sh
+
+CMD ["/run-httpd.sh"]
